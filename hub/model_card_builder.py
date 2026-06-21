@@ -49,8 +49,11 @@ def build_model_card(output_dir: Path) -> str:
         "",
         "Checkpoints for four-digit captcha recognition on the "
         "[pymlex/4-captcha](https://huggingface.co/datasets/pymlex/4-captcha) "
-        "dataset: CompactCaptchaNet and CaptchaViT, each in a clean-trained and "
-        "adversarially fine-tuned variant.",
+        "dataset: CompactCaptchaNet and CaptchaViT, each with a clean-trained and "
+        "FGSM fine-tuned variant.",
+        "",
+        "Pipeline and reproducibility: "
+        "[github.com/pymlex/4-captcha](https://github.com/pymlex/4-captcha)",
         "",
         "## Task",
         "",
@@ -76,21 +79,7 @@ def build_model_card(output_dir: Path) -> str:
         "eight heads, learned position queries over patch tokens. About 4.8M parameters.",
         "",
         "Clean training: 20 epochs. Adversarial fine-tuning: 20 epochs on a "
-        "120k mixed set.",
-        "",
-        "## Checkpoints",
-        "",
-        "```",
-        "checkpoints/",
-        "├── vit/",
-        "│   ├── clean/",
-        "│   └── finetune/",
-        "└── cnn/",
-        "    ├── clean/",
-        "    └── finetune/",
-        "```",
-        "",
-        "Each stage stores `best.pt`, `last.pt`, and `final.pt`.",
+        "120k mixed set. Checkpoints live under `checkpoints/{vit,cnn}/{clean,finetune}/`.",
         "",
         "## Test exact match",
         "",
@@ -155,10 +144,6 @@ def build_model_card(output_dir: Path) -> str:
             "## Dataset",
             "",
             "[pymlex/4-captcha](https://huggingface.co/datasets/pymlex/4-captcha)",
-            "",
-            "## Source",
-            "",
-            "[github.com/pymlex/4-captcha](https://github.com/pymlex/4-captcha)",
             "",
             "## Citation",
             "",
