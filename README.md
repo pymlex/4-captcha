@@ -27,6 +27,7 @@ with $\varepsilon \in \{0.015, 0.03\}$.
 
 ```
 4-captcha/
+├── pyproject.toml
 ├── install.py
 ├── main.py
 ├── config.py

@@ -31,8 +31,8 @@ def install_dependencies() -> None:
             "-m",
             "pip",
             "install",
-            "-r",
-            str(ROOT / "requirements.txt"),
+            "-e",
+            str(ROOT),
         ]
     )
     run(
