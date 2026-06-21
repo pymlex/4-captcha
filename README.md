@@ -95,101 +95,31 @@ cp .env.example .env
 pip install -r requirements.txt
 ```
 
-По умолчанию `.env.example` задаёт полный прогон: 132 000 изображений, `CLEAN_EPOCHS=50`, `FINETUNE_EPOCHS=1`, `QUICK_MODE=false`. Флаг `QUICK_MODE=true` сокращает выборки и число эпох только для локальной проверки пайплайна, в обычной работе его не включают.
+Defaults target the full run: 132,000 images, `CLEAN_EPOCHS=50`, `FINETUNE_EPOCHS=1`, `QUICK_MODE=false`. Set `QUICK_MODE=true` only for local pipeline smoke tests.
 
 ## Scripts
 
-### `main.py`
-
-Точка входа. Запускает шаги пайплайна по порядку или выборочно.
-
-| Аргумент | Значения | Описание |
-|----------|----------|----------|
-| `--step` | `all`, `generate`, `train_clean`, `fgsm`, `finetune`, `evaluate`, `plot`, `upload` | Этап пайплайна, по умолчанию `all` |
-| `--model` | `vit`, `cnn`, `both` | Модель для шагов обучения и FGSM, по умолчанию `both` |
+| Script | Description |
+|--------|-------------|
+| `main.py` | Pipeline entry point. `--step` selects a stage, `--model` selects `vit`, `cnn`, or `both`. |
+| `scripts/generate_dataset.py` | Generate clean train, val, and test PNGs and `labels.csv` under `data/clean/`. |
+| `scripts/train_clean.py` | Train ViT or CNN on clean data. `--model {vit,cnn}`. |
+| `scripts/generate_fgsm.py` | Build FGSM splits from a trained clean model. `--model {vit,cnn}`. |
+| `scripts/finetune.py` | Fine-tune on clean plus adversarial train mix. `--model {vit,cnn}`. |
+| `scripts/evaluate.py` | Run test metrics and save predictions. |
+| `scripts/plot_results.py` | Render evaluation and training plots from `outputs/`. |
+| `scripts/upload_hf.py` | Push dataset and checkpoints to Hugging Face. Requires `HF_TOKEN`. |
 
 ```bash
 python main.py --step all
 python main.py --step train_clean --model vit
-```
-
-### `scripts/generate_dataset.py`
-
-Генерация clean-сплитов с фиксированным `SEED=42`. Для каждого изображения: четыре цифры с отдельным шрифтом, растяжение, поворот $\pm 15°$, сдвиг, возможное перекрытие, затем elastic deformation, кривые Безье, шум, blur, gamma. Результат — PNG $320 \times 80$ и `labels.csv` в `data/clean/{train,val,test}/`. Комбинации цифр разбиты на непересекающиеся пулы: train sampling with replacement, val и test — из своих пулов.
-
-```bash
 python scripts/generate_dataset.py
-```
-
-### `scripts/train_clean.py`
-
-Обучение ViT или CNN на `data/clean/train`. AdamW с warmup, отдельные learning rate для ViT и CNN. Валидация на `data/clean/val`, early stopping по exact match. Чекпоинты в `checkpoints/{vit,cnn}/clean/`, метрики эпох в `outputs/metrics/{model}_clean.json`.
-
-```bash
-python scripts/train_clean.py --model vit
 python scripts/train_clean.py --model cnn
-```
-
-### `scripts/generate_fgsm.py`
-
-White-box FGSM от обученной clean-модели. Для каждой модели отдельно: 20 000 adv train из подвыборки clean train, 1 000 adv val и 1 000 adv test из clean val и test. Половина примеров с $\varepsilon=0.015$, половина с $\varepsilon=0.03$. Сохранение в `data/adv/{vit,cnn}/{train,val,test}/`.
-
-```bash
 python scripts/generate_fgsm.py --model vit
-python scripts/generate_fgsm.py --model cnn
-```
-
-### `scripts/finetune.py`
-
-Дообучение clean-чекпоинта на смеси 100 000 clean train и 20 000 adv train той же модели. Learning rate $10^{-4}$ для обеих архитектур. После каждой эпохи — валидация на 1 000 clean val и 1 000 adv val. Чекпоинты в `checkpoints/{vit,cnn}/finetune/`, метрики в `outputs/metrics/{model}_finetune.json`.
-
-```bash
 python scripts/finetune.py --model vit
-python scripts/finetune.py --model cnn
-```
-
-### `scripts/evaluate.py`
-
-Оценка четырёх конфигураций: ViT clean, ViT finetune, CNN clean, CNN finetune на clean test и adv test соответствующей модели. Exact match, accuracy, precision, recall, MCC по позициям, robustness gap, attack success rate. Confusion matrices в `outputs/confusion/`, предсказания в `outputs/predictions/`, сводка в `outputs/metrics/test_results.json`.
-
-```bash
 python scripts/evaluate.py
-```
-
-### `scripts/plot_results.py`
-
-Построение графиков из `outputs/metrics/` и `outputs/confusion/`: grouped bar charts по позициям для каждой модели и сплита, сравнение моделей на test, кривые loss и val exact match при обучении, chinchilla log-log loss.
-
-```bash
 python scripts/plot_results.py
-```
-
-### `scripts/upload_hf.py`
-
-Загрузка `data/` в [pymlex/4-captcha](https://huggingface.co/datasets/pymlex/4-captcha), чекпоинтов и артефактов `outputs/` в [pymlex/4-captcha-solvers](https://huggingface.co/pymlex/4-captcha-solvers). Требуется `HF_TOKEN` в `.env`.
-
-```bash
 python scripts/upload_hf.py
-```
-
-## Usage
-
-Полный пайплайн:
-
-```bash
-python main.py --step all
-```
-
-Отдельные шаги:
-
-```bash
-python main.py --step generate
-python main.py --step train_clean --model vit
-python main.py --step fgsm --model vit
-python main.py --step finetune --model vit
-python main.py --step evaluate
-python main.py --step plot
-python main.py --step upload
 ```
 
 ## Models
