@@ -7,20 +7,29 @@ from huggingface_hub.errors import HfHubHTTPError
 T = TypeVar("T")
 
 
-def call_with_retry(action: Callable[[], T], label: str) -> T:
+def call_with_retry(
+    action: Callable[[], T],
+    label: str,
+    max_attempts: int = 12,
+) -> T:
+    attempt = 0
     while True:
+        attempt += 1
         try:
             return action()
         except HfHubHTTPError as exc:
             response = exc.response
             if response is None or response.status_code != 429:
                 raise
-            retry_after = int(response.headers.get("Retry-After", 60))
+            if attempt >= max_attempts:
+                raise
+            retry_after = int(response.headers.get("Retry-After", 300))
+            wait_s = max(retry_after, 180)
             print(
                 f"Hugging Face rate limit on {label}. "
-                f"Waiting {retry_after}s before retry."
+                f"Attempt {attempt}/{max_attempts}. Waiting {wait_s}s."
             )
-            time.sleep(retry_after)
+            time.sleep(wait_s)
 
 
 def ensure_repo(

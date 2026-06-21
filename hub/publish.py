@@ -4,6 +4,7 @@ from huggingface_hub import HfApi
 
 from config import get_settings
 from hub.dataset_archive import ensure_archive, ensure_preview
+from hub.dataset_git_upload import upload_dataset_git
 from hub.github_publish import publish_github_outputs
 from hub.hf_retry import call_with_retry, ensure_repo
 
@@ -21,44 +22,12 @@ def upload_dataset(force_archive: bool = False) -> None:
     archive_path = ensure_archive(settings, force=force_archive)
     preview_dir = ensure_preview(settings)
 
-    print(f"Uploading {archive_path.name} to {settings.hf_dataset_repo}")
-    call_with_retry(
-        lambda: api.upload_file(
-            path_or_fileobj=str(archive_path),
-            path_in_repo=archive_path.name,
-            repo_id=settings.hf_dataset_repo,
-            repo_type="dataset",
-            commit_message="Upload dataset archive",
-            token=token,
-        ),
-        f"upload {archive_path.name}",
+    upload_dataset_git(
+        settings,
+        archive_path,
+        preview_dir,
+        DATASET_CARD,
     )
-
-    print(f"Uploading preview samples to {settings.hf_dataset_repo}")
-    call_with_retry(
-        lambda: api.upload_folder(
-            folder_path=str(preview_dir),
-            path_in_repo="preview",
-            repo_id=settings.hf_dataset_repo,
-            repo_type="dataset",
-            token=token,
-            commit_message="Upload preview samples",
-        ),
-        "upload preview",
-    )
-
-    call_with_retry(
-        lambda: api.upload_file(
-            path_or_fileobj=str(DATASET_CARD),
-            path_in_repo="README.md",
-            repo_id=settings.hf_dataset_repo,
-            repo_type="dataset",
-            commit_message="Update dataset card",
-            token=token,
-        ),
-        "upload dataset card",
-    )
-    print(f"Dataset upload complete: {settings.hf_dataset_repo}")
 
 
 def upload_models() -> None:

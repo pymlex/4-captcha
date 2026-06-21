@@ -39,8 +39,10 @@ def install_system_fonts() -> None:
                 "-y",
                 "fonts-dejavu-core",
                 "fonts-liberation",
+                "git-lfs",
             ]
         )
+        run(["git", "lfs", "install"])
 
 
 def install_project_fonts() -> None:

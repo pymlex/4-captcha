@@ -218,6 +218,7 @@ checkpoints/
 *.pt
 
 dist/
+dist/hf_dataset_repo/
 hub/_model_README.md
 core.*
 
