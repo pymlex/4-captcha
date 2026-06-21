@@ -3,7 +3,6 @@ import numpy as np
 from albumentations import (
     Compose,
     ElasticTransform,
-    GaussNoise,
     GaussianBlur,
     RandomBrightnessContrast,
 )
@@ -43,12 +42,21 @@ def draw_bezier_curves(
     return canvas
 
 
+def apply_gaussian_noise(
+    image: np.ndarray,
+    rng: np.random.Generator,
+) -> np.ndarray:
+    sigma = float(rng.uniform(5.0, 20.0))
+    noise = rng.normal(0.0, sigma, size=image.shape)
+    noisy = image.astype(np.float64) + noise
+    return np.clip(noisy, 0.0, 255.0).astype(np.uint8)
+
+
 def global_augment(
     image: np.ndarray,
     rng: np.random.Generator,
 ) -> np.ndarray:
-    """Apply elastic deformation, noise, blur, and brightness changes."""
-    sigma = float(rng.uniform(5.0, 20.0))
+    """Apply elastic deformation, blur, brightness changes, and Gaussian noise."""
     kernel = int(rng.choice([3, 5]))
     transform = Compose(
         [
@@ -57,7 +65,6 @@ def global_augment(
                 sigma=float(rng.uniform(5.0, 8.0)),
                 p=1.0,
             ),
-            GaussNoise(std_range=(sigma / 255.0, sigma / 255.0), p=1.0),
             GaussianBlur(blur_limit=(kernel, kernel), p=1.0),
             RandomBrightnessContrast(
                 brightness_limit=0.15,
@@ -75,4 +82,4 @@ def global_augment(
         0,
         255,
     ).astype(np.uint8)
-    return adjusted
+    return apply_gaussian_noise(adjusted, rng)
