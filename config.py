@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     weight_decay: float = 0.01
     warmup_steps: int = 500
     clean_epochs: int = 20
-    finetune_epochs: int = 1
+    finetune_epochs: int = 20
 
     vit_embed_dim: int = 256
     vit_depth: int = 6
