@@ -1,0 +1,274 @@
+[
+  {
+    "model_name": "vit",
+    "checkpoint_stage": "clean",
+    "split": "clean_test",
+    "exact_match": 0.0,
+    "position": {
+      "accuracy": [
+        0.15,
+        0.075,
+        0.1,
+        0.05
+      ],
+      "precision": [
+        0.015,
+        0.0075,
+        0.01,
+        0.005
+      ],
+      "recall": [
+        0.1,
+        0.1,
+        0.1,
+        0.1
+      ],
+      "mcc": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "robustness_gap": null,
+    "attack_success_rate": null
+  },
+  {
+    "model_name": "vit",
+    "checkpoint_stage": "clean",
+    "split": "adv_test",
+    "exact_match": 0.0,
+    "position": {
+      "accuracy": [
+        0.1,
+        0.0,
+        0.2,
+        0.0
+      ],
+      "precision": [
+        0.014285714285714287,
+        0.0,
+        0.028571428571428574,
+        0.0
+      ],
+      "recall": [
+        0.14285714285714285,
+        0.0,
+        0.14285714285714285,
+        0.0
+      ],
+      "mcc": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "robustness_gap": 0.0,
+    "attack_success_rate": 1.0
+  },
+  {
+    "model_name": "vit",
+    "checkpoint_stage": "finetune",
+    "split": "clean_test",
+    "exact_match": 0.0,
+    "position": {
+      "accuracy": [
+        0.15,
+        0.075,
+        0.1,
+        0.05
+      ],
+      "precision": [
+        0.015,
+        0.0075,
+        0.01,
+        0.005
+      ],
+      "recall": [
+        0.1,
+        0.1,
+        0.1,
+        0.1
+      ],
+      "mcc": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "robustness_gap": null,
+    "attack_success_rate": null
+  },
+  {
+    "model_name": "vit",
+    "checkpoint_stage": "finetune",
+    "split": "adv_test",
+    "exact_match": 0.0,
+    "position": {
+      "accuracy": [
+        0.1,
+        0.0,
+        0.2,
+        0.0
+      ],
+      "precision": [
+        0.014285714285714287,
+        0.0,
+        0.028571428571428574,
+        0.0
+      ],
+      "recall": [
+        0.14285714285714285,
+        0.0,
+        0.14285714285714285,
+        0.0
+      ],
+      "mcc": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "robustness_gap": 0.0,
+    "attack_success_rate": 1.0
+  },
+  {
+    "model_name": "cnn",
+    "checkpoint_stage": "clean",
+    "split": "clean_test",
+    "exact_match": 0.0,
+    "position": {
+      "accuracy": [
+        0.15,
+        0.125,
+        0.175,
+        0.175
+      ],
+      "precision": [
+        0.015,
+        0.01282051282051282,
+        0.017499999999999998,
+        0.017499999999999998
+      ],
+      "recall": [
+        0.1,
+        0.1,
+        0.1,
+        0.1
+      ],
+      "mcc": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "robustness_gap": null,
+    "attack_success_rate": null
+  },
+  {
+    "model_name": "cnn",
+    "checkpoint_stage": "clean",
+    "split": "adv_test",
+    "exact_match": 0.0,
+    "position": {
+      "accuracy": [
+        0.1,
+        0.2,
+        0.2,
+        0.1
+      ],
+      "precision": [
+        0.014285714285714287,
+        0.05,
+        0.028571428571428574,
+        0.016666666666666666
+      ],
+      "recall": [
+        0.14285714285714285,
+        0.25,
+        0.14285714285714285,
+        0.16666666666666666
+      ],
+      "mcc": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "robustness_gap": 0.0,
+    "attack_success_rate": 1.0
+  },
+  {
+    "model_name": "cnn",
+    "checkpoint_stage": "finetune",
+    "split": "clean_test",
+    "exact_match": 0.0,
+    "position": {
+      "accuracy": [
+        0.15,
+        0.125,
+        0.175,
+        0.175
+      ],
+      "precision": [
+        0.015,
+        0.0125,
+        0.017499999999999998,
+        0.017499999999999998
+      ],
+      "recall": [
+        0.1,
+        0.1,
+        0.1,
+        0.1
+      ],
+      "mcc": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "robustness_gap": null,
+    "attack_success_rate": null
+  },
+  {
+    "model_name": "cnn",
+    "checkpoint_stage": "finetune",
+    "split": "adv_test",
+    "exact_match": 0.0,
+    "position": {
+      "accuracy": [
+        0.1,
+        0.0,
+        0.2,
+        0.1
+      ],
+      "precision": [
+        0.014285714285714287,
+        0.0,
+        0.028571428571428574,
+        0.016666666666666666
+      ],
+      "recall": [
+        0.14285714285714285,
+        0.0,
+        0.14285714285714285,
+        0.16666666666666666
+      ],
+      "mcc": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "robustness_gap": 0.0,
+    "attack_success_rate": 1.0
+  }
+]

@@ -1,0 +1,8 @@
+[
+  {
+    "epoch": 1,
+    "train_loss": 9.356500625610352,
+    "val_clean_loss": 9.222171783447266,
+    "val_clean_exact_match": 0.0
+  }
+]

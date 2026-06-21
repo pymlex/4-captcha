@@ -214,5 +214,9 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
-# Streamlit
-.streamlit/secrets.toml
+# Project artefacts
+data/
+checkpoints/
+*.pt
+
+# Keep outputs/predictions/plots in git per evaluation artefacts
