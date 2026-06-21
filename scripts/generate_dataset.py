@@ -13,7 +13,7 @@ from data.augment import global_augment
 from data.combinations import sample_combos, split_combination_pools
 from data.labels import combo_to_string
 from data.render_digits import render_digits
-from data.fonts import collect_font_paths
+from data.fonts import collect_font_paths, ensure_project_fonts
 from utils.seed import set_seed
 
 
@@ -55,7 +55,13 @@ def generate_clean_dataset() -> None:
     pools = split_combination_pools(settings.seed)
     width = settings.image_spec.width
     height = settings.image_spec.height
+    ensure_project_fonts()
     font_paths = collect_font_paths()
+    if not font_paths:
+        raise RuntimeError(
+            "No TrueType fonts found. Run: apt-get install -y fonts-dejavu-core "
+            "or python install.py"
+        )
     splits = settings.splits
 
     reset_clean_data(settings.data_dir)

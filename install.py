@@ -24,6 +24,31 @@ def ensure_env_file() -> None:
     shutil.copy(example_path, env_path)
 
 
+def install_system_fonts() -> None:
+    if sys.platform.startswith("linux") and shutil.which("apt-get"):
+        run(
+            [
+                "apt-get",
+                "update",
+            ]
+        )
+        run(
+            [
+                "apt-get",
+                "install",
+                "-y",
+                "fonts-dejavu-core",
+                "fonts-liberation",
+            ]
+        )
+
+
+def install_project_fonts() -> None:
+    from data.fonts import ensure_project_fonts
+
+    ensure_project_fonts()
+
+
 def install_dependencies() -> None:
     run(
         [
@@ -73,6 +98,8 @@ def login_huggingface() -> None:
 def install() -> None:
     pull_repository()
     ensure_env_file()
+    install_system_fonts()
+    install_project_fonts()
     install_dependencies()
     login_github()
     login_huggingface()
