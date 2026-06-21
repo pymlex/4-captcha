@@ -8,76 +8,15 @@ import seaborn as sns
 from schemas import EvalResult
 
 
-POSITION_COLORS = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728"]
-MAX_GROUPS_PER_ROW = 8
-
-
 def load_test_results(path: Path) -> list[EvalResult]:
     raw = json.loads(path.read_text(encoding="utf-8"))
     return [EvalResult.model_validate(item) for item in raw]
-
-
-def grouped_position_bars(
-    result: EvalResult,
-    out_path: Path,
-) -> None:
-    """Grouped bars: metric groups on x-axis, four bars per group for positions."""
-    metrics = ["accuracy", "precision", "recall", "mcc"]
-    labels = ["Accuracy", "Precision", "Recall", "MCC"]
-    n_groups = len(metrics)
-    n_rows = int(np.ceil(n_groups / MAX_GROUPS_PER_ROW))
-    fig, axes = plt.subplots(
-        n_rows,
-        1,
-        figsize=(max(10, min(n_groups, MAX_GROUPS_PER_ROW) * 2.2), 4 * n_rows),
-        squeeze=False,
-    )
-    x = np.arange(min(n_groups, MAX_GROUPS_PER_ROW))
-    width = 0.18
-    for row in range(n_rows):
-        ax = axes[row, 0]
-        start = row * MAX_GROUPS_PER_ROW
-        end = min(start + MAX_GROUPS_PER_ROW, n_groups)
-        group_count = end - start
-        x_row = np.arange(group_count)
-        for pos in range(4):
-            values = [
-                getattr(result.position, metrics[g])[pos]
-                for g in range(start, end)
-            ]
-            offset = (pos - 1.5) * width
-            ax.bar(
-                x_row + offset,
-                values,
-                width,
-                label=f"Position {pos + 1}",
-                color=POSITION_COLORS[pos],
-            )
-        ax.set_xticks(x_row)
-        ax.set_xticklabels(labels[start:end])
-        ax.set_ylim(0.0, 1.05)
-        ax.set_ylabel("Score")
-        ax.grid(alpha=0.5)
-        ax.legend(loc="upper right")
-    title = (
-        f"{result.model_name.upper()} {result.checkpoint_stage} "
-        f"— {result.split}"
-    )
-    fig.suptitle(title)
-    fig.tight_layout()
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out_path, dpi=150)
-    plt.close(fig)
 
 
 def test_comparison_chart(
     results: list[EvalResult],
     out_path: Path,
 ) -> None:
-    """
-    Grouped bars across models: metric groups on x-axis,
-    bars for ViT clean, ViT FT, CNN clean, CNN FT.
-    """
     model_order = [
         ("vit", "clean"),
         ("vit", "finetune"),
@@ -214,20 +153,21 @@ def plot_confusion(
     title: str,
 ) -> None:
     data = np.load(cm_path)
-    fig, axes = plt.subplots(1, 4, figsize=(16, 4))
-    for pos in range(4):
-        sns.heatmap(
-            data[f"pos_{pos}"],
-            ax=axes[pos],
-            cmap="Blues",
-            cbar=pos == 3,
-            xticklabels=range(10),
-            yticklabels=range(10),
-        )
-        axes[pos].set_title(f"Pos {pos + 1}")
-        axes[pos].set_xlabel("Predicted")
-        axes[pos].set_ylabel("True")
-    fig.suptitle(title)
+    if "confusion" in data:
+        cm = data["confusion"]
+    else:
+        cm = sum(data[f"pos_{i}"] for i in range(4))
+    fig, ax = plt.subplots(figsize=(8, 7))
+    sns.heatmap(
+        cm,
+        ax=ax,
+        cmap="Blues",
+        xticklabels=range(10),
+        yticklabels=range(10),
+    )
+    ax.set_title(title)
+    ax.set_xlabel("Predicted digit")
+    ax.set_ylabel("True digit")
     fig.tight_layout()
     out_dir.mkdir(parents=True, exist_ok=True)
     safe = title.replace(" ", "_")
@@ -239,9 +179,6 @@ def generate_all_plots(output_dir: Path) -> None:
     results_path = output_dir / "metrics" / "test_results.json"
     results = load_test_results(results_path)
     plot_dir = output_dir / "plots"
-    for res in results:
-        name = f"{res.model_name}_{res.checkpoint_stage}_{res.split}"
-        grouped_position_bars(res, plot_dir / f"{name}_positions.png")
     test_comparison_chart(results, plot_dir / "test_model_comparison.png")
     for model in ("vit", "cnn"):
         training_curves(

@@ -1,6 +1,6 @@
 # 4-captcha
 
-Synthetic four-digit captcha recognition with Vision Transformer and compact CNN solvers, FGSM adversarial training, and per-position evaluation.
+Synthetic four-digit captcha recognition with Vision Transformer and compact CNN solvers, FGSM adversarial training, and exact-match evaluation.
 
 ## Overview
 

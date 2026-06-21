@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class SplitCounts(BaseModel):
@@ -30,19 +30,11 @@ class TrainMetrics(BaseModel):
     val_adv_exact_match: float | None = None
 
 
-class PositionMetrics(BaseModel):
-    accuracy: list[float] = Field(min_length=4, max_length=4)
-    precision: list[float] = Field(min_length=4, max_length=4)
-    recall: list[float] = Field(min_length=4, max_length=4)
-    mcc: list[float] = Field(min_length=4, max_length=4)
-
-
 class EvalResult(BaseModel):
     model_name: str
     checkpoint_stage: str
     split: str
     exact_match: float
-    position: PositionMetrics
     robustness_gap: float | None = None
     attack_success_rate: float | None = None
 

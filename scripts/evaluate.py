@@ -1,5 +1,4 @@
 import _path
-import argparse
 import json
 from pathlib import Path
 
@@ -10,12 +9,8 @@ from tqdm.auto import tqdm
 from config import get_settings
 from data.dataset import CaptchaDataset
 from data.labels import targets_to_strings
-from eval.metrics import (
-    confusion_matrices,
-    exact_match_rate,
-    per_position_metrics,
-)
-from schemas import EvalResult, PositionMetrics, TestPredictions
+from eval.metrics import confusion_matrix_aggregate, exact_match_rate
+from schemas import EvalResult, TestPredictions
 from train.factory import build_model
 from utils.checkpoint import load_checkpoint
 from utils.device import get_device
@@ -72,13 +67,11 @@ def evaluate_checkpoint(
     y_true, y_pred, labels, predictions = collect_predictions(
         model, dataset, device, settings.batch_size
     )
-    pos = per_position_metrics(y_true, y_pred)
     result = EvalResult(
         model_name=model_name,
         checkpoint_stage=stage,
         split=split,
         exact_match=exact_match_rate(y_true, y_pred),
-        position=PositionMetrics(**pos),
     )
     pred_path = (
         settings.output_dir
@@ -102,8 +95,8 @@ def evaluate_checkpoint(
         / f"{model_name}_{stage}_{split}.npz"
     )
     cm_path.parent.mkdir(parents=True, exist_ok=True)
-    cms = confusion_matrices(y_true, y_pred)
-    np.savez(cm_path, **{f"pos_{i}": cms[i] for i in range(4)})
+    cm = confusion_matrix_aggregate(y_true, y_pred)
+    np.savez(cm_path, confusion=cm)
     return result
 
 
