@@ -25,7 +25,6 @@ def ensure_env_file() -> None:
 
 
 def install_dependencies() -> None:
-    run([sys.executable, "-m", "pip", "install", "-U", "pip"])
     run(
         [
             sys.executable,
