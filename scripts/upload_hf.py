@@ -1,8 +1,7 @@
 import _path
 
-from hub.publish import upload_dataset, upload_models
+from hub.publish import publish_all
 
 
 if __name__ == "__main__":
-    upload_dataset()
-    upload_models()
+    publish_all()

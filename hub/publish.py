@@ -3,20 +3,11 @@ from pathlib import Path
 from huggingface_hub import HfApi, create_repo, upload_large_folder
 
 from config import get_settings
-from hub.model_card_builder import build_model_card
+from hub.github_publish import publish_github_outputs
 
 ROOT = Path(__file__).resolve().parents[1]
 DATASET_CARD = ROOT / "hub" / "dataset_card.md"
-
-DATASET_DESCRIPTION = (
-    "A synthetic grayscale four-digit captcha dataset with clean splits and "
-    "per-model FGSM adversarial images for robust digit-string recognition."
-)
-
-MODEL_DESCRIPTION = (
-    "ViT and CNN captcha solvers with clean and adversarially fine-tuned "
-    "checkpoints, training curves, and exact-match evaluation metrics."
-)
+MODEL_CARD = ROOT / "hub" / "model_card.md"
 
 
 def upload_dataset() -> None:
@@ -28,11 +19,6 @@ def upload_dataset() -> None:
         repo_type="dataset",
         exist_ok=True,
         token=token,
-    )
-    api.update_repo_settings(
-        repo_id=settings.hf_dataset_repo,
-        repo_type="dataset",
-        description=DATASET_DESCRIPTION,
     )
     print(f"Uploading dataset from {settings.data_dir} with upload_large_folder")
     upload_large_folder(
@@ -60,11 +46,6 @@ def upload_models() -> None:
     repo = settings.hf_model_repo
     api = HfApi(token=token)
     create_repo(repo, repo_type="model", exist_ok=True, token=token)
-    api.update_repo_settings(
-        repo_id=repo,
-        repo_type="model",
-        description=MODEL_DESCRIPTION,
-    )
 
     plots_dir = settings.output_dir / "plots"
     metrics_dir = settings.output_dir / "metrics"
@@ -101,11 +82,8 @@ def upload_models() -> None:
         commit_message="Upload checkpoints",
     )
 
-    card = build_model_card(settings.output_dir)
-    card_path = ROOT / "hub" / "_model_README.md"
-    card_path.write_text(card, encoding="utf-8")
     api.upload_file(
-        path_or_fileobj=str(card_path),
+        path_or_fileobj=str(MODEL_CARD),
         path_in_repo="README.md",
         repo_id=repo,
         repo_type="model",
@@ -113,3 +91,16 @@ def upload_models() -> None:
         token=token,
     )
     print(f"Model upload complete: {repo}")
+
+
+def publish_all(
+    github: bool = True,
+    hf_dataset: bool = True,
+    hf_models: bool = True,
+) -> None:
+    if github:
+        publish_github_outputs()
+    if hf_dataset:
+        upload_dataset()
+    if hf_models:
+        upload_models()

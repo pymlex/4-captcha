@@ -61,12 +61,14 @@ with $\varepsilon \in \{0.015, 0.03\}$.
 │   ├── finetune.py
 │   ├── evaluate.py
 │   ├── plot_results.py
+│   ├── publish.py
 │   ├── upload_hf_dataset.py
 │   ├── upload_hf_models.py
 │   └── upload_hf.py
 ├── hub/
 │   ├── dataset_card.md
-│   ├── model_card_builder.py
+│   ├── model_card.md
+│   ├── github_publish.py
 │   └── publish.py
 └── outputs/
     ├── metrics/
@@ -151,18 +153,25 @@ Render bar charts, training curves, and confusion matrices from outputs/.
 python scripts/plot_results.py
 ```
 
-## Upload
+## Publish
 
-| Target | Repository | Command |
-|--------|------------|---------|
-| Dataset and dataset card | [pymlex/4-captcha](https://huggingface.co/datasets/pymlex/4-captcha) | `python scripts/upload_hf_dataset.py` |
-| Models, metrics, plots | [pymlex/4-captcha-solvers](https://huggingface.co/pymlex/4-captcha-solvers) | `python scripts/upload_hf_models.py` |
+Run `evaluate.py` and `plot_results.py` before publish so metrics and plots are current.
 
-Run `evaluate.py` and `plot_results.py` before the model upload so the model card includes test metrics and training curves. Predictions stay in the GitHub repository under `outputs/predictions/`.
+| Target | Repository |
+|--------|------------|
+| Metrics, predictions, plots, hub cards | [github.com/pymlex/4-captcha](https://github.com/pymlex/4-captcha) |
+| Dataset and dataset card | [pymlex/4-captcha](https://huggingface.co/datasets/pymlex/4-captcha) |
+| Checkpoints, metrics, plots, model card | [pymlex/4-captcha-solvers](https://huggingface.co/pymlex/4-captcha-solvers) |
 
 ```bash
-python scripts/upload_hf_dataset.py
-python scripts/upload_hf_models.py
+python scripts/publish.py
+```
+
+Predictions stay on GitHub under `outputs/predictions/`. Hugging Face model and dataset cards are static files in `hub/`.
+
+```bash
+python scripts/publish.py --skip-github
+python scripts/publish.py --skip-dataset --skip-models
 ```
 
 ## Full pipeline

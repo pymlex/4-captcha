@@ -62,7 +62,7 @@ def main() -> None:
         run_script("plot_results.py")
 
     if args.step in ("all", "upload"):
-        run_script("upload_hf.py")
+        run_script("publish.py")
 
 
 if __name__ == "__main__":
