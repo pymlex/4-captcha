@@ -27,6 +27,7 @@ with $\varepsilon \in \{0.015, 0.03\}$.
 
 ```
 4-captcha/
+├── install.py
 ├── main.py
 ├── config.py
 ├── schemas.py
@@ -84,12 +85,28 @@ flowchart TB
 
 ## Setup
 
-Copy environment defaults and install dependencies. Full-run settings: 132,000 images, CLEAN_EPOCHS=50, FINETUNE_EPOCHS=1, QUICK_MODE=false. Set QUICK_MODE=true only for local smoke tests.
+One-command install after clone: pull updates, install dependencies, install githublex, authenticate GitHub and Hugging Face.
 
 ```bash
-cp .env.example .env
-pip install -r requirements.txt
+git clone https://github.com/pymlex/4-captcha.git
+cd 4-captcha
+python install.py
 ```
+
+Bootstrap without a prior clone: download install.py, then run it. The script clones into ./4-captcha and completes setup there.
+
+```bash
+curl -fsSL -o install.py https://raw.githubusercontent.com/pymlex/4-captcha/main/install.py
+python install.py
+```
+
+Custom target directory:
+
+```bash
+python install.py --dir ~/projects/4-captcha
+```
+
+Set HF_TOKEN in .env before install to skip the interactive Hugging Face prompt. Full-run defaults: 132,000 images, CLEAN_EPOCHS=50, FINETUNE_EPOCHS=1, QUICK_MODE=false. Set QUICK_MODE=true only for local smoke tests.
 
 ## Dataset generation
 
