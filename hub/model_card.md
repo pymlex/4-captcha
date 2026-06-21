@@ -36,20 +36,6 @@ with $\varepsilon \in \{0.015, 0.03\}$.
 | Adv val per model | 1,000 |
 | Adv test per model | 1,000 |
 
-```mermaid
-flowchart TB
-  subgraph generation [Dataset]
-    G[Sample combos, render digits, global augment, PNG and labels]
-  end
-  subgraph train [Training]
-    T[Clean train ViT and CNN, FGSM per model, fine-tune mixed 120k]
-  end
-  subgraph eval [Evaluation]
-    E[Clean test 5k, adv test 1k, metrics and plots]
-  end
-  G --> T --> E
-```
-
 ## Architectures
 
 **CompactCaptchaNet** — four stride-2 conv blocks, reshape to $(1280, 20)$, `Conv1d` temporal mixing, adaptive pool to four positions, linear heads. About 1.4M parameters.
@@ -57,21 +43,6 @@ flowchart TB
 **CaptchaViT** — patch size $16 \times 16$, embed dim 256, depth 6, eight heads, learned position queries over patch tokens. About 4.8M parameters.
 
 Clean training runs for 20 epochs. Adversarial fine-tuning runs for 20 epochs on a 120k mixed clean and adversarial set. Checkpoints are stored under `checkpoints/{vit,cnn}/{clean,finetune}/`.
-
-## Test exact match
-
-| Model | Stage | Split | Exact match |
-|-------|-------|-------|-------------|
-| vit | clean | clean_test | see `metrics/test_results.json` |
-| vit | clean | adv_test | see `metrics/test_results.json` |
-| vit | finetune | clean_test | see `metrics/test_results.json` |
-| vit | finetune | adv_test | see `metrics/test_results.json` |
-| cnn | clean | clean_test | see `metrics/test_results.json` |
-| cnn | clean | adv_test | see `metrics/test_results.json` |
-| cnn | finetune | clean_test | see `metrics/test_results.json` |
-| cnn | finetune | adv_test | see `metrics/test_results.json` |
-
-Exact match is the fraction of test images where all four predicted digits match the label. Adversarial splits are model-specific: `adv/vit/test` for ViT checkpoints and `adv/cnn/test` for CNN checkpoints.
 
 ## Training curves
 
@@ -131,23 +102,11 @@ The chart groups four test metrics across ViT, ViT-FT, CNN, and CNN-FT.
 
 ## Confusion matrices
 
-![ViT clean clean test](plots/confusion/vit_clean_clean_test_confusion.png)
-
 ![ViT clean adv test](plots/confusion/vit_clean_adv_test_confusion.png)
-
-![ViT finetune clean test](plots/confusion/vit_finetune_clean_test_confusion.png)
-
-![ViT finetune adv test](plots/confusion/vit_finetune_adv_test_confusion.png)
-
-![CNN clean clean test](plots/confusion/cnn_clean_clean_test_confusion.png)
 
 ![CNN clean adv test](plots/confusion/cnn_clean_adv_test_confusion.png)
 
-![CNN finetune clean test](plots/confusion/cnn_finetune_clean_test_confusion.png)
-
-![CNN finetune adv test](plots/confusion/cnn_finetune_adv_test_confusion.png)
-
-Each heatmap aggregates predictions over all four digit positions into a single $10 \times 10$ count matrix. Diagonal mass is correct classification mass. Off-diagonal peaks reveal systematic confusions, often between glyphs with similar topology under rotation and elastic warp. Comparing clean and adv panels for the same checkpoint shows which digit pairs FGSM exploits. Comparing clean versus fine-tune panels shows whether robustness training redistributes error mass back toward the diagonal.
+Each heatmap aggregates predictions over all four digit positions into a single $10 \times 10$ count matrix for FGSM test images from the clean checkpoint. Off-diagonal mass shows which digit pairs the attack exploits before fine-tuning.
 
 ## Dataset
 

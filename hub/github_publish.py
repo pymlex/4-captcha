@@ -8,6 +8,7 @@ GITHUB_PATHS = [
     "outputs/predictions",
     "outputs/plots",
     "outputs/confusion",
+    "README.md",
     "hub/model_card.md",
     "hub/dataset_card.md",
 ]
