@@ -2,42 +2,175 @@
 
 Synthetic four-digit captcha recognition with Vision Transformer and compact CNN solvers, FGSM adversarial training, and exact-match evaluation.
 
-## Dataset
+## Overview
 
-Grayscale synthetic four-digit captcha images for robust digit-string recognition and adversarial fine-tuning experiments. Full release: [pymlex/4-captcha](https://huggingface.co/datasets/pymlex/4-captcha) as `data.tar.gz` with `preview/` samples per split.
-
-| Split | Images | Labels |
-|-------|--------|--------|
-| clean/train | 100,000 | 4-digit string |
-| clean/val | 5,000 | 4-digit string |
-| clean/test | 5,000 | 4-digit string |
-| adv/{vit,cnn}/train | 20,000 each | same as source clean image |
-| adv/{vit,cnn}/val | 1,000 each | same as source clean image |
-| adv/{vit,cnn}/test | 1,000 each | same as source clean image |
-
-Total stored images: 132,000 with both ViT and CNN adversarial splits.
-
-**Image format:** $320 \times 80$ grayscale PNG, `labels.csv` with columns `filename`, `label`.
-
-**Rendering:** four digits with independent TrueType fonts, native glyph height about $0.45$–$0.55$ of image height, rotation in $[-15°, 15°]$, small shifts, optional overlap, white or light gray background.
-
-**Global transforms:** elastic deformation, dark Bézier curves, Gaussian noise with $\sigma \sim \mathrm{Uniform}(5, 20)$, blur, brightness and contrast jitter, gamma scaling.
-
-**Adversarial splits:** FGSM with $x_{adv} = clip(x + \varepsilon \cdot sign(\nabla_x L), 0, 1)$, $\varepsilon \in \{0.015, 0.03\}$, separate folders per model under `adv/vit/` and `adv/cnn/`.
-
-## Models
-
-Checkpoints and training artefacts: [pymlex/4-captcha-solvers](https://huggingface.co/pymlex/4-captcha-solvers). CompactCaptchaNet and CaptchaViT, each with clean-trained and FGSM fine-tuned variants.
-
-Input is a grayscale $320 \times 80$ image with a four-digit string. Each model outputs logits $Z \in \mathbb{R}^{4 \times 10}$. The training objective is
+The pipeline generates grayscale $320 \times 80$ captcha images with per-digit font variation, elastic deformation, Bézier noise curves, and FGSM perturbations. Two classifiers output logits $Z \in \mathbb{R}^{B \times 4 \times 10}$. The training objective is
 
 $$L = \sum_{p=1}^{4} CE(Z_{:,p,:}, y_p)$$
 
-FGSM perturbations follow
+FGSM examples follow
 
 $$x_{adv} = clip(x + \varepsilon \cdot sign(\nabla_x L), 0, 1)$$
 
 with $\varepsilon \in \{0.015, 0.03\}$.
+
+| Split | Images |
+|-------|--------|
+| Clean train | 100,000 |
+| Clean val | 5,000 |
+| Clean test | 5,000 |
+| Adv train per model | 20,000 |
+| Adv val per model | 1,000 |
+| Adv test per model | 1,000 |
+
+Grayscale synthetic four-digit captcha images for robust digit-string recognition and adversarial fine-tuning. Full release: [pymlex/4-captcha](https://huggingface.co/datasets/pymlex/4-captcha) as `data.tar.gz` with `preview/` samples per split. Image format is $320 \times 80$ PNG with `labels.csv`. Per-digit TrueType fonts, elastic deformation, Bézier curves, Gaussian noise with $\sigma \sim \mathrm{Uniform}(5, 20)$, and model-specific FGSM splits under `adv/vit/` and `adv/cnn/`. Checkpoints: [pymlex/4-captcha-solvers](https://huggingface.co/pymlex/4-captcha-solvers).
+
+## Project tree
+
+```
+4-captcha/
+├── pyproject.toml
+├── install.py
+├── main.py
+├── config.py
+├── schemas.py
+├── requirements.txt
+├── .env.example
+├── data/
+│   ├── augment.py
+│   ├── combinations.py
+│   ├── dataset.py
+│   ├── fonts.py
+│   ├── labels.py
+│   └── render_digits.py
+├── models/
+│   ├── cnn.py          # CompactCaptchaNet (~1.4M params)
+│   └── vit.py          # CaptchaViT (~4.8M params)
+├── train/
+│   ├── factory.py
+│   ├── loop.py
+│   ├── loss.py
+│   └── scheduler.py
+├── attacks/
+│   └── fgsm.py
+├── eval/
+│   ├── metrics.py
+│   └── plots.py
+├── scripts/
+│   ├── generate_dataset.py
+│   ├── train_clean.py
+│   ├── generate_fgsm.py
+│   ├── finetune.py
+│   ├── evaluate.py
+│   ├── plot_results.py
+│   ├── publish.py
+│   ├── upload_hf_dataset.py
+│   ├── upload_hf_models.py
+│   └── upload_hf.py
+├── hub/
+│   ├── dataset_card.md
+│   ├── dataset_archive.py
+│   ├── dataset_git_upload.py
+│   ├── model_card.md
+│   ├── github_publish.py
+│   ├── hf_retry.py
+│   └── publish.py
+└── outputs/
+    ├── metrics/
+    ├── plots/
+    └── predictions/
+```
+
+## Pipeline
+
+```mermaid
+flowchart TB
+  subgraph generation [Dataset]
+    G[Sample combos, render digits, global augment, PNG and labels]
+  end
+  subgraph train [Training]
+    T[Clean train ViT and CNN, FGSM per model, fine-tune mixed 120k]
+  end
+  subgraph eval [Evaluation]
+    E[Clean test 5k, adv test 1k, metrics and plots]
+  end
+  G --> T --> E
+```
+
+## Setup
+
+One-command install after clone: pull updates, install dependencies, install githublex, authenticate GitHub and Hugging Face.
+
+```bash
+git clone https://github.com/pymlex/4-captcha.git
+cd 4-captcha
+python install.py
+```
+
+## Dataset generation
+
+Build clean train, val, and test splits as PNG files with labels.csv.
+
+```bash
+python scripts/generate_dataset.py
+```
+
+## Clean training
+
+Train ViT or CNN from scratch on clean data. Checkpoints go to checkpoints/{model}/clean/.
+
+```bash
+python scripts/train_clean.py --model vit
+python scripts/train_clean.py --model cnn
+```
+
+## FGSM generation
+
+Generate adversarial splits from a trained clean model. One FGSM set per model.
+
+```bash
+python scripts/generate_fgsm.py --model vit
+python scripts/generate_fgsm.py --model cnn
+```
+
+## Fine-tuning
+
+Fine-tune each model on the mixed clean and adversarial training set.
+
+```bash
+python scripts/finetune.py --model vit
+python scripts/finetune.py --model cnn
+```
+
+## Evaluation
+
+Compute test metrics and save predictions to outputs/.
+
+```bash
+python scripts/evaluate.py
+```
+
+## Plotting
+
+Render training curves, test comparison, and confusion matrices from outputs/.
+
+```bash
+python scripts/plot_results.py
+```
+
+## Publish
+
+| Target | Repository |
+|--------|------------|
+| Metrics, predictions, plots, hub cards | [github.com/pymlex/4-captcha](https://github.com/pymlex/4-captcha) |
+| Dataset archive, preview samples | [pymlex/4-captcha](https://huggingface.co/datasets/pymlex/4-captcha) |
+| Checkpoints, metrics, plots, model card | [pymlex/4-captcha-solvers](https://huggingface.co/pymlex/4-captcha-solvers) |
+
+```bash
+python scripts/publish.py
+```
+
+## Models
 
 **CompactCaptchaNet** — four stride-2 conv blocks, reshape to $(1280, 20)$, `Conv1d` temporal mixing, adaptive pool to four positions, linear heads. About 1.4M parameters.
 
@@ -108,89 +241,6 @@ Compare `val_adv_exact_match` against the ViT fine-tune curve to see which archi
 Each heatmap aggregates predictions over all four digit positions into a single $10 \times 10$ count matrix for FGSM test images from the clean checkpoint.
 
 Metrics JSON: `outputs/metrics/test_results.json`. Test predictions: `outputs/predictions/`.
-
-## Project tree
-
-```
-4-captcha/
-├── pyproject.toml
-├── install.py
-├── main.py
-├── config.py
-├── schemas.py
-├── requirements.txt
-├── .env.example
-├── data/
-├── models/
-├── train/
-├── attacks/
-├── eval/
-├── scripts/
-├── hub/
-└── outputs/
-    ├── metrics/
-    ├── plots/
-    └── predictions/
-```
-
-## Setup
-
-```bash
-git clone https://github.com/pymlex/4-captcha.git
-cd 4-captcha
-python install.py
-```
-
-## Dataset generation
-
-```bash
-python scripts/generate_dataset.py
-```
-
-## Clean training
-
-```bash
-python scripts/train_clean.py --model vit
-python scripts/train_clean.py --model cnn
-```
-
-## FGSM generation
-
-```bash
-python scripts/generate_fgsm.py --model vit
-python scripts/generate_fgsm.py --model cnn
-```
-
-## Fine-tuning
-
-```bash
-python scripts/finetune.py --model vit
-python scripts/finetune.py --model cnn
-```
-
-## Evaluation
-
-```bash
-python scripts/evaluate.py
-```
-
-## Plotting
-
-```bash
-python scripts/plot_results.py
-```
-
-## Publish
-
-| Target | Repository |
-|--------|------------|
-| Metrics, predictions, plots, hub cards | [github.com/pymlex/4-captcha](https://github.com/pymlex/4-captcha) |
-| Dataset archive, preview samples | [pymlex/4-captcha](https://huggingface.co/datasets/pymlex/4-captcha) |
-| Checkpoints, metrics, plots, model card | [pymlex/4-captcha-solvers](https://huggingface.co/pymlex/4-captcha-solvers) |
-
-```bash
-python scripts/publish.py
-```
 
 ## Citation
 
