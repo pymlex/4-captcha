@@ -93,21 +93,6 @@ cd 4-captcha
 python install.py
 ```
 
-Bootstrap without a prior clone: download install.py, then run it. The script clones into ./4-captcha and completes setup there.
-
-```bash
-curl -fsSL -o install.py https://raw.githubusercontent.com/pymlex/4-captcha/main/install.py
-python install.py
-```
-
-Custom target directory:
-
-```bash
-python install.py --dir ~/projects/4-captcha
-```
-
-Set HF_TOKEN in .env before install to skip the interactive Hugging Face prompt. Full-run defaults: 132,000 images, CLEAN_EPOCHS=50, FINETUNE_EPOCHS=1, QUICK_MODE=false. Set QUICK_MODE=true only for local smoke tests.
-
 ## Dataset generation
 
 Build clean train, val, and test splits as PNG files with labels.csv.
@@ -161,7 +146,7 @@ python scripts/plot_results.py
 
 ## Upload
 
-Push the dataset and checkpoints to Hugging Face. Set HF_TOKEN in .env first.
+Push the dataset and checkpoints to Hugging Face.
 
 ```bash
 python scripts/upload_hf.py
@@ -194,8 +179,6 @@ python main.py --step upload
 |----------|------------|
 | Dataset | [pymlex/4-captcha](https://huggingface.co/datasets/pymlex/4-captcha) |
 | Checkpoints, metrics, plots | [pymlex/4-captcha-solvers](https://huggingface.co/pymlex/4-captcha-solvers) |
-
-Set `HF_TOKEN` in `.env` before `upload`.
 
 ## Citation
 

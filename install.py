@@ -1,68 +1,30 @@
-import argparse
 import os
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 
-REPO_URL = "https://github.com/pymlex/4-captcha.git"
 GITHUBLEX_URL = "https://github.com/pymlex/githublex.git"
-PROJECT_MARKERS = ("config.py", "main.py", "requirements.txt")
+ROOT = Path(__file__).resolve().parent
 
 
 def run(command: list[str], cwd: Path | None = None) -> None:
     subprocess.run(command, check=True, cwd=cwd)
 
 
-def is_project_root(path: Path) -> bool:
-    return all((path / name).exists() for name in PROJECT_MARKERS)
+def pull_repository() -> None:
+    run(["git", "pull", "--ff-only"], cwd=ROOT)
 
 
-def clone_repo(target: Path) -> None:
-    target.parent.mkdir(parents=True, exist_ok=True)
-    run(["git", "clone", REPO_URL, str(target)])
-
-
-def pull_repo(root: Path) -> None:
-    run(["git", "-C", str(root), "pull", "--ff-only"])
-
-
-def ensure_repository(explicit_dir: Path | None) -> Path:
-    if explicit_dir is not None:
-        root = explicit_dir.expanduser().resolve()
-        if is_project_root(root):
-            pull_repo(root)
-            return root
-        if (root / ".git").exists():
-            return root
-        if root.exists() and any(root.iterdir()):
-            raise RuntimeError(f"Target directory is not empty: {root}")
-        clone_repo(root)
-        return root
-
-    cwd = Path.cwd().resolve()
-    if is_project_root(cwd):
-        pull_repo(cwd)
-        return cwd
-
-    target = cwd / "4-captcha"
-    if is_project_root(target):
-        pull_repo(target)
-        return target
-
-    clone_repo(target)
-    return target
-
-
-def ensure_env_file(root: Path) -> None:
-    env_path = root / ".env"
-    example_path = root / ".env.example"
+def ensure_env_file() -> None:
+    env_path = ROOT / ".env"
+    example_path = ROOT / ".env.example"
     if env_path.exists() or not example_path.exists():
         return
     shutil.copy(example_path, env_path)
 
 
-def install_dependencies(root: Path) -> None:
+def install_dependencies() -> None:
     run([sys.executable, "-m", "pip", "install", "-U", "pip"])
     run(
         [
@@ -71,7 +33,7 @@ def install_dependencies(root: Path) -> None:
             "pip",
             "install",
             "-r",
-            str(root / "requirements.txt"),
+            str(ROOT / "requirements.txt"),
         ]
     )
     run(
@@ -92,47 +54,30 @@ def login_github() -> None:
     gh_login()
 
 
-def load_hf_token(root: Path) -> str:
+def load_hf_token() -> str:
     from dotenv import load_dotenv
 
-    load_dotenv(root / ".env")
+    load_dotenv(ROOT / ".env")
     return os.environ.get("HF_TOKEN", "").strip()
 
 
-def login_huggingface(root: Path) -> None:
+def login_huggingface() -> None:
     from huggingface_hub import login
 
-    token = load_hf_token(root)
+    token = load_hf_token()
     if token:
         login(token=token)
         return
     login()
 
 
-def install(explicit_dir: Path | None = None) -> Path:
-    root = ensure_repository(explicit_dir)
-    os.chdir(root)
-    ensure_env_file(root)
-    install_dependencies(root)
+def install() -> None:
+    pull_repository()
+    ensure_env_file()
+    install_dependencies()
     login_github()
-    login_huggingface(root)
-    return root
-
-
-def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Clone or update 4-captcha, install deps, login to GitHub and Hugging Face."
-    )
-    parser.add_argument(
-        "--dir",
-        type=Path,
-        default=None,
-        help="Clone or update the repository at this path. Default: cwd or ./4-captcha",
-    )
-    args = parser.parse_args()
-    root = install(args.dir)
-    print(f"Installation complete: {root}")
+    login_huggingface()
 
 
 if __name__ == "__main__":
-    main()
+    install()
