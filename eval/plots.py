@@ -67,7 +67,11 @@ def training_curves(
     out_dir: Path,
     title_prefix: str,
 ) -> None:
+    if not metrics_path.exists():
+        return
     history = json.loads(metrics_path.read_text(encoding="utf-8"))
+    if not history:
+        return
     epochs = [r["epoch"] for r in history]
     train_loss = [r["train_loss"] for r in history]
     fig, ax = plt.subplots(figsize=(8, 5))
@@ -177,6 +181,10 @@ def plot_confusion(
 
 def generate_all_plots(output_dir: Path) -> None:
     results_path = output_dir / "metrics" / "test_results.json"
+    if not results_path.exists():
+        raise FileNotFoundError(
+            f"Missing {results_path}. Run python scripts/evaluate.py first."
+        )
     results = load_test_results(results_path)
     plot_dir = output_dir / "plots"
     test_comparison_chart(results, plot_dir / "test_model_comparison.png")
@@ -192,6 +200,10 @@ def generate_all_plots(output_dir: Path) -> None:
             f"{model}_finetune",
         )
     cm_dir = output_dir / "confusion"
+    if not cm_dir.exists() or not any(cm_dir.glob("*.npz")):
+        raise FileNotFoundError(
+            f"No confusion matrices in {cm_dir}. Run python scripts/evaluate.py first."
+        )
     for cm_file in cm_dir.glob("*.npz"):
         plot_confusion(
             cm_file,
