@@ -13,7 +13,7 @@ from data.augment import global_augment
 from data.combinations import sample_combos, split_combination_pools
 from data.labels import combo_to_string
 from data.render_digits import render_digits
-from data.fonts import load_fonts
+from data.fonts import collect_font_paths
 from utils.seed import set_seed
 
 
@@ -33,14 +33,14 @@ def save_split(
     width: int,
     height: int,
     rng: np.random.Generator,
-    fonts,
+    font_paths,
     split_name: str,
 ) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     records = []
     for idx in tqdm(range(len(combos)), desc=f"generate {split_name}"):
         combo = combos[idx]
-        base = render_digits(combo, width, height, rng, fonts)
+        base = render_digits(combo, width, height, rng, font_paths)
         image = global_augment(base, rng)
         filename = f"{split_name}_{idx:06d}.png"
         Image.fromarray(image).save(out_dir / filename)
@@ -55,7 +55,7 @@ def generate_clean_dataset() -> None:
     pools = split_combination_pools(settings.seed)
     width = settings.image_spec.width
     height = settings.image_spec.height
-    fonts = load_fonts(height)
+    font_paths = collect_font_paths()
     splits = settings.splits
 
     reset_clean_data(settings.data_dir)
@@ -76,7 +76,7 @@ def generate_clean_dataset() -> None:
         width,
         height,
         rng,
-        fonts,
+        font_paths,
         "train",
     )
     save_split(
@@ -85,7 +85,7 @@ def generate_clean_dataset() -> None:
         width,
         height,
         rng,
-        fonts,
+        font_paths,
         "val",
     )
     save_split(
@@ -94,7 +94,7 @@ def generate_clean_dataset() -> None:
         width,
         height,
         rng,
-        fonts,
+        font_paths,
         "test",
     )
 

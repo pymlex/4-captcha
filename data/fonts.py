@@ -30,6 +30,8 @@ FONT_CANDIDATES = [
     "Consola.ttf",
 ]
 
+FONT_SIZE_TO_GLYPH_HEIGHT = 1.45
+
 
 def font_directories() -> list[Path]:
     dirs = []
@@ -43,15 +45,20 @@ def font_directories() -> list[Path]:
     return dirs
 
 
-def load_fonts(image_height: int = 80) -> list[ImageFont.FreeTypeFont]:
-    size = max(32, int(image_height * 0.55))
-    fonts = []
+def collect_font_paths() -> list[Path]:
+    paths = []
+    seen = set()
     for name in FONT_CANDIDATES:
         for directory in font_directories():
             path = directory / name
-            if path.exists():
-                fonts.append(ImageFont.truetype(str(path), size=size))
+            resolved = str(path.resolve())
+            if path.exists() and resolved not in seen:
+                paths.append(path)
+                seen.add(resolved)
                 break
-    if len(fonts) < 4:
-        fonts = [ImageFont.load_default() for _ in range(10)]
-    return fonts
+    return paths
+
+
+def font_for_glyph_height(path: Path, glyph_height: int) -> ImageFont.FreeTypeFont:
+    size = max(16, int(glyph_height * FONT_SIZE_TO_GLYPH_HEIGHT))
+    return ImageFont.truetype(str(path), size=size)
