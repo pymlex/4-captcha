@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     finetune_lr: float = 1e-4
     weight_decay: float = 0.01
     warmup_steps: int = 500
-    clean_epochs: int = 50
+    clean_epochs: int = 20
     finetune_epochs: int = 1
 
     vit_embed_dim: int = 256

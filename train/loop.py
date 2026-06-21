@@ -7,7 +7,6 @@ from tqdm.auto import tqdm
 
 from data.dataset import CaptchaDataset
 from train.loss import captcha_loss, exact_match
-from utils.device import get_device
 
 
 def make_loader(
@@ -30,17 +29,23 @@ def make_loader(
     )
 
 
+def write_history(path: Path, history: list[dict]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(history, indent=2), encoding="utf-8")
+
+
 @torch.no_grad()
 def evaluate_loader(
     model: torch.nn.Module,
     loader: DataLoader,
     device: torch.device,
+    desc: str = "val",
 ) -> dict[str, float]:
     model.eval()
     total_loss = 0.0
     total_exact = 0.0
     batches = 0
-    for images, targets in loader:
+    for images, targets in tqdm(loader, desc=desc, leave=False):
         images = images.to(device)
         targets = targets.to(device)
         logits = model(images)
@@ -61,14 +66,14 @@ def train_one_epoch(
     scheduler: torch.optim.lr_scheduler.LRScheduler | None,
     device: torch.device,
     grad_accumulation_steps: int,
+    desc: str = "train",
 ) -> float:
     model.train()
     running = 0.0
     steps = 0
     optimizer.zero_grad(set_to_none=True)
-    for step_idx, (images, targets) in enumerate(
-        tqdm(loader, desc="train", leave=False)
-    ):
+    batch_bar = tqdm(loader, desc=desc, leave=False)
+    for step_idx, (images, targets) in enumerate(batch_bar):
         images = images.to(device)
         targets = targets.to(device)
         logits = model(images)
@@ -79,15 +84,8 @@ def train_one_epoch(
             optimizer.zero_grad(set_to_none=True)
             if scheduler is not None:
                 scheduler.step()
-        running += loss.item() * grad_accumulation_steps
+        step_loss = loss.item() * grad_accumulation_steps
+        running += step_loss
         steps += 1
+        batch_bar.set_postfix(loss=f"{step_loss:.4f}")
     return running / max(1, steps)
-
-
-def append_metrics(path: Path, record: dict) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    history = []
-    if path.exists():
-        history = json.loads(path.read_text(encoding="utf-8"))
-    history.append(record)
-    path.write_text(json.dumps(history, indent=2), encoding="utf-8")

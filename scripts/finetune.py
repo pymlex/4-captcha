@@ -5,15 +5,16 @@ from pathlib import Path
 import torch
 from torch.optim import AdamW
 from torch.utils.data import ConcatDataset, DataLoader
+from tqdm.auto import tqdm
 
 from config import get_settings
 from data.dataset import CaptchaDataset
 from train.factory import build_model, default_lr
 from train.loop import (
-    append_metrics,
     evaluate_loader,
     make_loader,
     train_one_epoch,
+    write_history,
 )
 from train.scheduler import warmup_cosine_scheduler
 from utils.checkpoint import load_checkpoint, save_checkpoint
@@ -71,13 +72,18 @@ def finetune(model_name: str) -> None:
     optimizer = AdamW(
         model.parameters(), lr=lr, weight_decay=settings.weight_decay
     )
-    total_steps = len(train_loader) * settings.finetune_epochs_effective
+    epochs = settings.finetune_epochs_effective
+    total_steps = len(train_loader) * epochs
     scheduler = warmup_cosine_scheduler(
         optimizer, settings.warmup_steps, total_steps
     )
     ckpt_dir = settings.checkpoint_dir / model_name / "finetune"
     metrics_path = settings.output_dir / "metrics" / f"{model_name}_finetune.json"
-    for epoch in range(1, settings.finetune_epochs_effective + 1):
+    history: list[dict] = []
+    write_history(metrics_path, history)
+    record: dict = {}
+    epoch_bar = tqdm(range(1, epochs + 1), desc="epochs")
+    for epoch in epoch_bar:
         train_loss = train_one_epoch(
             model,
             train_loader,
@@ -85,9 +91,20 @@ def finetune(model_name: str) -> None:
             scheduler,
             device,
             settings.grad_accumulation_steps,
+            desc=f"train {epoch}/{epochs}",
         )
-        val_clean = evaluate_loader(model, val_clean_loader, device)
-        val_adv = evaluate_loader(model, val_adv_loader, device)
+        val_clean = evaluate_loader(
+            model,
+            val_clean_loader,
+            device,
+            desc=f"val clean {epoch}/{epochs}",
+        )
+        val_adv = evaluate_loader(
+            model,
+            val_adv_loader,
+            device,
+            desc=f"val adv {epoch}/{epochs}",
+        )
         record = {
             "epoch": epoch,
             "train_loss": train_loss,
@@ -96,7 +113,13 @@ def finetune(model_name: str) -> None:
             "val_clean_exact_match": val_clean["exact_match"],
             "val_adv_exact_match": val_adv["exact_match"],
         }
-        append_metrics(metrics_path, record)
+        history.append(record)
+        write_history(metrics_path, history)
+        epoch_bar.set_postfix(
+            train_loss=f"{train_loss:.4f}",
+            val_clean_em=f"{val_clean['exact_match']:.4f}",
+            val_adv_em=f"{val_adv['exact_match']:.4f}",
+        )
         save_checkpoint(
             ckpt_dir / "last.pt",
             model,
@@ -108,7 +131,7 @@ def finetune(model_name: str) -> None:
         ckpt_dir / "final.pt",
         model,
         optimizer,
-        settings.finetune_epochs_effective,
+        epochs,
         record,
     )
 
