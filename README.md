@@ -61,7 +61,13 @@ with $\varepsilon \in \{0.015, 0.03\}$.
 │   ├── finetune.py
 │   ├── evaluate.py
 │   ├── plot_results.py
+│   ├── upload_hf_dataset.py
+│   ├── upload_hf_models.py
 │   └── upload_hf.py
+├── hub/
+│   ├── dataset_card.md
+│   ├── model_card_builder.py
+│   └── publish.py
 └── outputs/
     ├── metrics/
     ├── plots/
@@ -147,10 +153,16 @@ python scripts/plot_results.py
 
 ## Upload
 
-Push the dataset and checkpoints to Hugging Face.
+| Target | Repository | Command |
+|--------|------------|---------|
+| Dataset and dataset card | [pymlex/4-captcha](https://huggingface.co/datasets/pymlex/4-captcha) | `python scripts/upload_hf_dataset.py` |
+| Models, metrics, plots | [pymlex/4-captcha-solvers](https://huggingface.co/pymlex/4-captcha-solvers) | `python scripts/upload_hf_models.py` |
+
+Run `evaluate.py` and `plot_results.py` before the model upload so the model card includes test metrics and training curves. Predictions stay in the GitHub repository under `outputs/predictions/`.
 
 ```bash
-python scripts/upload_hf.py
+python scripts/upload_hf_dataset.py
+python scripts/upload_hf_models.py
 ```
 
 ## Full pipeline
@@ -178,8 +190,10 @@ python main.py --step upload
 
 | Artefact | Repository |
 |----------|------------|
-| Dataset | [pymlex/4-captcha](https://huggingface.co/datasets/pymlex/4-captcha) |
-| Checkpoints, metrics, plots | [pymlex/4-captcha-solvers](https://huggingface.co/pymlex/4-captcha-solvers) |
+| Dataset, splits, transforms card | [pymlex/4-captcha](https://huggingface.co/datasets/pymlex/4-captcha) |
+| Checkpoints, metrics, training plots | [pymlex/4-captcha-solvers](https://huggingface.co/pymlex/4-captcha-solvers) |
+
+Code, predictions, and pipeline scripts: this GitHub repository.
 
 ## Citation
 
