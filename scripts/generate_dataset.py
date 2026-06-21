@@ -1,5 +1,6 @@
 import _path
 import json
+import shutil
 from pathlib import Path
 
 import numpy as np
@@ -18,6 +19,12 @@ from utils.seed import set_seed
 
 def split_dir(data_dir: Path, split: str) -> Path:
     return data_dir / "clean" / split
+
+
+def reset_clean_data(data_dir: Path) -> None:
+    clean_root = data_dir / "clean"
+    if clean_root.exists():
+        shutil.rmtree(clean_root)
 
 
 def save_split(
@@ -46,10 +53,12 @@ def generate_clean_dataset() -> None:
     set_seed(settings.seed)
     rng = np.random.default_rng(settings.seed)
     pools = split_combination_pools(settings.seed)
-    fonts = load_fonts()
     width = settings.image_spec.width
     height = settings.image_spec.height
+    fonts = load_fonts(height)
     splits = settings.splits
+
+    reset_clean_data(settings.data_dir)
 
     train_combos = sample_combos(
         pools["train"], splits.train, rng, replace=True

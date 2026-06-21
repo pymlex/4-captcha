@@ -5,6 +5,9 @@ from PIL import ImageFont
 
 
 FONT_CANDIDATES = [
+    "DejaVuSans.ttf",
+    "DejaVuSans-Bold.ttf",
+    "LiberationSans-Regular.ttf",
     "arial.ttf",
     "times.ttf",
     "cour.ttf",
@@ -40,7 +43,8 @@ def font_directories() -> list[Path]:
     return dirs
 
 
-def load_fonts(size: int = 56) -> list[ImageFont.FreeTypeFont]:
+def load_fonts(image_height: int = 80) -> list[ImageFont.FreeTypeFont]:
+    size = max(32, int(image_height * 0.55))
     fonts = []
     for name in FONT_CANDIDATES:
         for directory in font_directories():
