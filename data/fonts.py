@@ -40,7 +40,7 @@ def font_directories() -> list[Path]:
     return dirs
 
 
-def load_fonts(size: int = 48) -> list[ImageFont.FreeTypeFont]:
+def load_fonts(size: int = 56) -> list[ImageFont.FreeTypeFont]:
     fonts = []
     for name in FONT_CANDIDATES:
         for directory in font_directories():
