@@ -4,13 +4,13 @@ Synthetic four-digit captcha recognition with Vision Transformer and compact CNN
 
 ## Overview
 
-The pipeline generates grayscale $320 \times 80$ captcha images with per-digit font variation, elastic deformation, Bézier noise curves, and FGSM perturbations. Two classifiers output logits $\mathbf{Z} \in \mathbb{R}^{B \times 4 \times 10}$. The training objective is
+The pipeline generates grayscale $320 \times 80$ captcha images with per-digit font variation, elastic deformation, Bézier noise curves, and FGSM perturbations. Two classifiers output logits $Z \in \mathbb{R}^{B \times 4 \times 10}$. The training objective is
 
-$$\mathcal{L} = \sum_{p=1}^{4} \mathrm{CE}(\mathbf{Z}_{:,p,:}, y_p)$$
+$$L = \sum_{p=1}^{4} CE(Z_{:,p,:}, y_p)$$
 
 FGSM examples follow
 
-$$x_{\mathrm{adv}} = \mathrm{clip}\bigl(x + \varepsilon \cdot \mathrm{sign}(\nabla_x \mathcal{L}),\, 0,\, 1\bigr)$$
+$$x_{adv} = clip(x + \varepsilon \cdot sign(\nabla_x L), 0, 1)$$
 
 with $\varepsilon \in \{0.015, 0.03\}$.
 
@@ -71,55 +71,98 @@ with $\varepsilon \in \{0.015, 0.03\}$.
 ```mermaid
 flowchart TB
   subgraph generation [Dataset]
-    G1[Sample combos] --> G2[Render digits]
-    G2 --> G3[Global augment]
-    G3 --> G4[PNG + labels]
+    G[Sample combos, render digits, global augment, PNG + labels]
   end
   subgraph train [Training]
-    T1[Clean train ViT/CNN] --> T2[FGSM per model]
-    T2 --> T3[Fine-tune mixed 120k]
+    T[Clean train ViT/CNN, FGSM per model, fine-tune mixed 120k]
   end
   subgraph eval [Evaluation]
-    E1[Clean test 5k] --> E3[Metrics + plots]
-    E2[Adv test 1k] --> E3
+    E[Clean test 5k, Adv test 1k, metrics + plots]
   end
-  G4 --> T1
-  T3 --> E1
-  T3 --> E2
+  G --> T --> E
 ```
 
 ## Setup
+
+Copy environment defaults and install dependencies. Full-run settings: 132,000 images, CLEAN_EPOCHS=50, FINETUNE_EPOCHS=1, QUICK_MODE=false. Set QUICK_MODE=true only for local smoke tests.
 
 ```bash
 cp .env.example .env
 pip install -r requirements.txt
 ```
 
-Defaults target the full run: 132,000 images, `CLEAN_EPOCHS=50`, `FINETUNE_EPOCHS=1`, `QUICK_MODE=false`. Set `QUICK_MODE=true` only for local pipeline smoke tests.
+## Dataset generation
 
-## Scripts
+Build clean train, val, and test splits as PNG files with labels.csv.
 
-| Script | Description |
-|--------|-------------|
-| `main.py` | Pipeline entry point. `--step` selects a stage, `--model` selects `vit`, `cnn`, or `both`. |
-| `scripts/generate_dataset.py` | Generate clean train, val, and test PNGs and `labels.csv` under `data/clean/`. |
-| `scripts/train_clean.py` | Train ViT or CNN on clean data. `--model {vit,cnn}`. |
-| `scripts/generate_fgsm.py` | Build FGSM splits from a trained clean model. `--model {vit,cnn}`. |
-| `scripts/finetune.py` | Fine-tune on clean plus adversarial train mix. `--model {vit,cnn}`. |
-| `scripts/evaluate.py` | Run test metrics and save predictions. |
-| `scripts/plot_results.py` | Render evaluation and training plots from `outputs/`. |
-| `scripts/upload_hf.py` | Push dataset and checkpoints to Hugging Face. Requires `HF_TOKEN`. |
+```bash
+python scripts/generate_dataset.py
+```
+
+## Clean training
+
+Train ViT or CNN from scratch on clean data. Checkpoints go to checkpoints/{model}/clean/.
+
+```bash
+python scripts/train_clean.py --model vit
+python scripts/train_clean.py --model cnn
+```
+
+## FGSM generation
+
+Generate adversarial splits from a trained clean model. One FGSM set per model.
+
+```bash
+python scripts/generate_fgsm.py --model vit
+python scripts/generate_fgsm.py --model cnn
+```
+
+## Fine-tuning
+
+Fine-tune each model on the mixed clean and adversarial training set.
+
+```bash
+python scripts/finetune.py --model vit
+python scripts/finetune.py --model cnn
+```
+
+## Evaluation
+
+Compute test metrics and save predictions to outputs/.
+
+```bash
+python scripts/evaluate.py
+```
+
+## Plotting
+
+Render bar charts, training curves, and confusion matrices from outputs/.
+
+```bash
+python scripts/plot_results.py
+```
+
+## Upload
+
+Push the dataset and checkpoints to Hugging Face. Set HF_TOKEN in .env first.
+
+```bash
+python scripts/upload_hf.py
+```
+
+## Full pipeline
+
+Run all stages via main.py. Use --step to run a single stage and --model to select vit, cnn, or both.
 
 ```bash
 python main.py --step all
+python main.py --step generate
 python main.py --step train_clean --model vit
-python scripts/generate_dataset.py
-python scripts/train_clean.py --model cnn
-python scripts/generate_fgsm.py --model vit
-python scripts/finetune.py --model vit
-python scripts/evaluate.py
-python scripts/plot_results.py
-python scripts/upload_hf.py
+python main.py --step fgsm --model vit
+python main.py --step finetune --model vit
+python main.py --step evaluate
+python main.py --step plot
+python main.py --step upload
 ```
 
 ## Models
