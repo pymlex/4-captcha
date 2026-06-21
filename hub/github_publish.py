@@ -7,6 +7,7 @@ GITHUB_PATHS = [
     "outputs/metrics",
     "outputs/predictions",
     "outputs/plots",
+    "outputs/confusion",
     "hub/model_card.md",
     "hub/dataset_card.md",
 ]
@@ -17,14 +18,14 @@ def publish_github_outputs(
 ) -> None:
     for rel in GITHUB_PATHS:
         subprocess.run(["git", "add", rel], cwd=ROOT, check=True)
-    status = subprocess.run(
-        ["git", "status", "--porcelain"],
+    staged = subprocess.run(
+        ["git", "diff", "--cached", "--name-only"],
         cwd=ROOT,
         capture_output=True,
         text=True,
         check=True,
     )
-    if not status.stdout.strip():
+    if not staged.stdout.strip():
         print("No GitHub changes to commit.")
         return
     subprocess.run(["git", "commit", "-m", message], cwd=ROOT, check=True)

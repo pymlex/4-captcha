@@ -218,5 +218,7 @@ checkpoints/
 *.pt
 
 dist/
+hub/_model_README.md
+core.*
 
 # Keep outputs/predictions/plots in git per evaluation artefacts
