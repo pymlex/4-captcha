@@ -69,7 +69,9 @@ where $L$ is the sum of four cross-entropy terms over digit positions.
 
 Training adversarial images use $\varepsilon \in \{0.015, 0.03\}$ in equal proportion. Validation and test adversarial images use the same $\varepsilon$ set per split. Each model has its own adversarial folders under `adv/vit/` and `adv/cnn/`.
 
-## Layout
+## Download
+
+The full dataset is shipped as a single gzip-compressed tar archive `data.tar.gz`. After extraction the layout is
 
 ```
 data/
@@ -87,6 +89,36 @@ data/
         ├── val/
         └── test/
 ```
+
+```python
+from huggingface_hub import hf_hub_download
+import tarfile
+
+archive = hf_hub_download(
+    repo_id="pymlex/4-captcha",
+    repo_type="dataset",
+    filename="data.tar.gz",
+)
+with tarfile.open(archive, "r:gz") as tar:
+    tar.extractall(path="data")
+```
+
+```bash
+huggingface-cli download pymlex/4-captcha data.tar.gz --repo-type dataset
+tar -xzf data.tar.gz -C data
+```
+
+## Preview
+
+The `preview/` folder holds four sample images per split with matching `labels.csv` files. Use it to inspect rendering and adversarial noise before downloading the archive.
+
+| Split | Preview path |
+|-------|----------------|
+| clean train | `preview/clean/train/` |
+| clean val | `preview/clean/val/` |
+| clean test | `preview/clean/test/` |
+| adv vit | `preview/adv/vit/{train,val,test}/` |
+| adv cnn | `preview/adv/cnn/{train,val,test}/` |
 
 ## Code and training
 

@@ -48,6 +48,10 @@ class Settings(BaseSettings):
     hf_model_repo: str = "pymlex/4-captcha-solvers"
     hf_token: str = ""
 
+    dataset_archive_path: Path = Path("dist/data.tar.gz")
+    dataset_preview_dir: Path = Path("dist/preview")
+    preview_per_split: int = 4
+
     @property
     def image_spec(self) -> ImageSpec:
         return ImageSpec()

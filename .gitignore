@@ -217,4 +217,6 @@ data/adv/
 checkpoints/
 *.pt
 
+dist/
+
 # Keep outputs/predictions/plots in git per evaluation artefacts

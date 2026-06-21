@@ -24,11 +24,17 @@ def main() -> None:
         action="store_true",
         help="Skip Hugging Face model repo upload",
     )
+    parser.add_argument(
+        "--rebuild-archive",
+        action="store_true",
+        help="Rebuild data.tar.gz even if fingerprint matches",
+    )
     args = parser.parse_args()
     publish_all(
         github=not args.skip_github,
         hf_dataset=not args.skip_dataset,
         hf_models=not args.skip_models,
+        force_archive=args.rebuild_archive,
     )
 
 

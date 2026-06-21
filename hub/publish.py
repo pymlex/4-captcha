@@ -1,8 +1,9 @@
 from pathlib import Path
 
-from huggingface_hub import HfApi, create_repo, upload_large_folder
+from huggingface_hub import HfApi, create_repo
 
 from config import get_settings
+from hub.dataset_archive import ensure_archive, ensure_preview
 from hub.github_publish import publish_github_outputs
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -10,7 +11,7 @@ DATASET_CARD = ROOT / "hub" / "dataset_card.md"
 MODEL_CARD = ROOT / "hub" / "model_card.md"
 
 
-def upload_dataset() -> None:
+def upload_dataset(force_archive: bool = False) -> None:
     settings = get_settings()
     token = settings.hf_token or None
     api = HfApi(token=token)
@@ -20,15 +21,30 @@ def upload_dataset() -> None:
         exist_ok=True,
         token=token,
     )
-    print(f"Uploading dataset from {settings.data_dir} with upload_large_folder")
-    upload_large_folder(
+
+    archive_path = ensure_archive(settings, force=force_archive)
+    preview_dir = ensure_preview(settings)
+
+    print(f"Uploading {archive_path.name} to {settings.hf_dataset_repo}")
+    api.upload_file(
+        path_or_fileobj=str(archive_path),
+        path_in_repo=archive_path.name,
         repo_id=settings.hf_dataset_repo,
-        folder_path=settings.data_dir,
         repo_type="dataset",
-        num_workers=8,
-        print_report=True,
-        print_report_every=30,
+        commit_message="Upload dataset archive",
+        token=token,
     )
+
+    print(f"Uploading preview samples to {settings.hf_dataset_repo}")
+    api.upload_folder(
+        folder_path=str(preview_dir),
+        path_in_repo="preview",
+        repo_id=settings.hf_dataset_repo,
+        repo_type="dataset",
+        token=token,
+        commit_message="Upload preview samples",
+    )
+
     api.upload_file(
         path_or_fileobj=str(DATASET_CARD),
         path_in_repo="README.md",
@@ -97,10 +113,11 @@ def publish_all(
     github: bool = True,
     hf_dataset: bool = True,
     hf_models: bool = True,
+    force_archive: bool = False,
 ) -> None:
     if github:
         publish_github_outputs()
     if hf_dataset:
-        upload_dataset()
+        upload_dataset(force_archive=force_archive)
     if hf_models:
         upload_models()

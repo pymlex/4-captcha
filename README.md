@@ -67,6 +67,7 @@ with $\varepsilon \in \{0.015, 0.03\}$.
 │   └── upload_hf.py
 ├── hub/
 │   ├── dataset_card.md
+│   ├── dataset_archive.py
 │   ├── model_card.md
 │   ├── github_publish.py
 │   └── publish.py
@@ -160,7 +161,7 @@ Run `evaluate.py` and `plot_results.py` before publish so metrics and plots are 
 | Target | Repository |
 |--------|------------|
 | Metrics, predictions, plots, hub cards | [github.com/pymlex/4-captcha](https://github.com/pymlex/4-captcha) |
-| Dataset and dataset card | [pymlex/4-captcha](https://huggingface.co/datasets/pymlex/4-captcha) |
+| Dataset archive, preview samples, dataset card | [pymlex/4-captcha](https://huggingface.co/datasets/pymlex/4-captcha) |
 | Checkpoints, metrics, plots, model card | [pymlex/4-captcha-solvers](https://huggingface.co/pymlex/4-captcha-solvers) |
 
 ```bash
@@ -172,7 +173,10 @@ Predictions stay on GitHub under `outputs/predictions/`. Hugging Face model and 
 ```bash
 python scripts/publish.py --skip-github
 python scripts/publish.py --skip-dataset --skip-models
+python scripts/publish.py --rebuild-archive
 ```
+
+The dataset is packed into `dist/data.tar.gz` and uploaded as one file. HF keeps `preview/` with four images per split.
 
 ## Full pipeline
 
